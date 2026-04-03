@@ -480,6 +480,21 @@ public sealed class SerialBridge : IAsyncDisposable
                             await _rfc2217.SetDtrNoWaitAsync(remoteDtr, ct);
                         if (rtsChanged)
                             await _rfc2217.SetRtsNoWaitAsync(remoteRts, ct);
+
+                        // Detect hard-reset sequence: RTS falling edge (true->false) indicates
+                        // the end of the reset pulse. At this point the ESP32 reboots back to
+                        // its ROM bootloader at 115200. If the Pi is at a different baud rate
+                        // (from a previous esptool session at high speed), reset it to 115200
+                        // so the next esptool session can sync properly.
+                        if (rtsChanged && !remoteRts && _lastBaudRate != 115200)
+                        {
+                            _logger.LogInformation(
+                                "Hard reset detected (RTS falling edge) while Pi at {Baud}, resetting to 115200",
+                                _lastBaudRate);
+                            await _rfc2217.SetBaudRateAsync(115200, ct);
+                            _lastBaudRate = 115200;
+                            _slipSniffer.Reset();
+                        }
                     }
 
                     // Check data format changes
