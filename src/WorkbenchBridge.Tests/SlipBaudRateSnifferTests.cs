@@ -26,29 +26,55 @@ public class SlipBaudRateSnifferTests
     // Frame layout: C0 00 0F 08 00 [checksum 4B] [new_baud LE 4B] [old_baud LE 4B] C0
     private static byte[] BuildChangeBaudFrame(int newBaud, int oldBaud = 115200)
     {
-        var frame = new byte[18];
-        frame[0] = 0xC0;  // SLIP start
-        frame[1] = 0x00;  // direction = request
-        frame[2] = 0x0F;  // command = CHANGE_BAUDRATE
-        frame[3] = 0x08;  // size low
-        frame[4] = 0x00;  // size high
+        var payload = new List<byte>();
+        
+        // Header: direction(1) + command(1) + size(2) + checksum(4)
+        payload.Add(0x00);  // direction = request
+        payload.Add(0x0F);  // command = CHANGE_BAUDRATE
+        payload.Add(0x08);  // size low
+        payload.Add(0x00);  // size high
         // checksum (4 bytes, zeroed for tests)
-        frame[5] = 0x00;
-        frame[6] = 0x00;
-        frame[7] = 0x00;
-        frame[8] = 0x00;
-        // new_baud LE
-        frame[9]  = (byte)(newBaud & 0xFF);
-        frame[10] = (byte)((newBaud >> 8) & 0xFF);
-        frame[11] = (byte)((newBaud >> 16) & 0xFF);
-        frame[12] = (byte)((newBaud >> 24) & 0xFF);
-        // old_baud LE
-        frame[13] = (byte)(oldBaud & 0xFF);
-        frame[14] = (byte)((oldBaud >> 8) & 0xFF);
-        frame[15] = (byte)((oldBaud >> 16) & 0xFF);
-        frame[16] = (byte)((oldBaud >> 24) & 0xFF);
-        frame[17] = 0xC0; // SLIP end
+        payload.Add(0x00);
+        payload.Add(0x00);
+        payload.Add(0x00);
+        payload.Add(0x00);
+        
+        // new_baud LE (with SLIP escaping)
+        AddEscapedInt32(payload, newBaud);
+        
+        // old_baud LE (with SLIP escaping)
+        AddEscapedInt32(payload, oldBaud);
+        
+        // Build final frame: C0 + payload + C0
+        var frame = new byte[payload.Count + 2];
+        frame[0] = 0xC0;  // SLIP start
+        payload.CopyTo(frame, 1);
+        frame[frame.Length - 1] = 0xC0;  // SLIP end
+        
         return frame;
+    }
+
+    // Add a 32-bit integer in little-endian format with SLIP escaping
+    private static void AddEscapedInt32(List<byte> buffer, int value)
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            byte b = (byte)((value >> (i * 8)) & 0xFF);
+            if (b == 0xC0)
+            {
+                buffer.Add(0xDB);
+                buffer.Add(0xDC);
+            }
+            else if (b == 0xDB)
+            {
+                buffer.Add(0xDB);
+                buffer.Add(0xDD);
+            }
+            else
+            {
+                buffer.Add(b);
+            }
+        }
     }
 
     // Split a byte array into chunks at the given offsets.

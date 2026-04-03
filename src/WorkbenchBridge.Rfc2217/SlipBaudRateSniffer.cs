@@ -188,7 +188,23 @@ public sealed class SlipBaudRateSniffer
 
             // Need at least 4 bytes for direction + command + size(2).
             if (bodyStart + 4 > length)
-                break;
+            {
+                // Not enough bytes to read header. Buffer what we have if there are any.
+                int partialLen = length - bodyStart;
+                if (partialLen > 0)
+                {
+                    if (_verbose)
+                        _logger?.LogDebug(
+                            "SLIP sniffer: frame start found but header incomplete, buffering {Len} bytes",
+                            partialLen);
+                    _partialSlipFrame = new byte[partialLen];
+                    Array.Copy(buffer, bodyStart, _partialSlipFrame, 0, partialLen);
+                    _partialSlipLength = partialLen;
+                    break;
+                }
+                // No bytes to buffer (C0 at end of chunk), continue looking
+                continue;
+            }
 
             byte direction = buffer[bodyStart];
             byte command = buffer[bodyStart + 1];
