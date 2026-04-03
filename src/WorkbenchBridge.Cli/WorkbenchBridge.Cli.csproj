@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>WorkbenchBridge.Cli</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WorkbenchBridge.Rfc2217\WorkbenchBridge.Rfc2217.csproj" />
+    <ProjectReference Include="..\WorkbenchBridge.Service\WorkbenchBridge.Service.csproj" />
+    <ProjectReference Include="..\WorkbenchBridge.Ipc\WorkbenchBridge.Ipc.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.IO.Ports" Version="10.*" />
+  </ItemGroup>
+
+</Project>
