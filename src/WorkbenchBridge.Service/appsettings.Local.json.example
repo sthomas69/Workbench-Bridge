@@ -1,0 +1,38 @@
+{
+  "_comment": [
+    "Copy to appsettings.Local.json (gitignored) and edit to match your hardware.",
+    "Run `workbenchbridge-cli configure` (elevated) to apply: it will seed any",
+    "missing com0com pairs via setupc.exe install, write PortName/EmuBR values",
+    "to the registry, restart the com0com driver, and restart WorkbenchBridge."
+  ],
+  "Bridge": {
+    "Pi": {
+      "Host": "workbench.local",
+      "PortalPort": 8080,
+      "DiscoveryEndpoint": "/api/devices"
+    },
+    "ComPortMapping": [
+      { "SlotLabel": "SLOT1", "PiTcpPort": 4001,
+        "User":     { "RegistryKey": "CNCA0", "PortName": "COM41" },
+        "Internal": { "RegistryKey": "CNCB0", "PortName": "COM241" } },
+      { "SlotLabel": "SLOT2", "PiTcpPort": 4002,
+        "User":     { "RegistryKey": "CNCA1", "PortName": "COM42" },
+        "Internal": { "RegistryKey": "CNCB1", "PortName": "COM242" } },
+      { "SlotLabel": "SLOT3", "PiTcpPort": 4003,
+        "User":     { "RegistryKey": "CNCA2", "PortName": "COM43" },
+        "Internal": { "RegistryKey": "CNCB2", "PortName": "COM243" } },
+      { "SlotLabel": "SLOT4", "PiTcpPort": 4004,
+        "User":     { "RegistryKey": "CNCA3", "PortName": "COM44" },
+        "Internal": { "RegistryKey": "CNCB3", "PortName": "COM244" } },
+      { "SlotLabel": "SLOT5", "PiTcpPort": 4005,
+        "User":     { "RegistryKey": "CNCA4", "PortName": "COM45" },
+        "Internal": { "RegistryKey": "CNCB4", "PortName": "COM245" } },
+      { "SlotLabel": "SLOT6", "PiTcpPort": 4006,
+        "User":     { "RegistryKey": "CNCA5", "PortName": "COM46" },
+        "Internal": { "RegistryKey": "CNCB5", "PortName": "COM246" } },
+      { "SlotLabel": "SLOT7", "PiTcpPort": 4007,
+        "User":     { "RegistryKey": "CNCA6", "PortName": "COM47" },
+        "Internal": { "RegistryKey": "CNCB6", "PortName": "COM247" } }
+    ]
+  }
+}

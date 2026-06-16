@@ -1,0 +1,72 @@
+<Project>
+  <!--
+    GIT-DRIVEN BUILD NUMBER  (non-MAUI: no AppxManifest patching, no ApplicationVersion)
+    ====================================================================================
+    Build number = git commit count (rev-list of HEAD), computed at build time.
+    Increments by one per commit, needs no external state.
+
+    Version layout:
+      Local dev : {VersionPrefix}.{build}-dev+{git-hash}   (IsDevBuild=true)
+      CI/release: {VersionPrefix}.{build}                  (IsDevBuild=false)
+    AssemblyVersion / FileVersion are always the numeric {VersionPrefix}.{build}.
+
+    CI override: pass /p:BuildNumber=$(Build.BuildId) to skip the git query.
+
+    Composition happens INSIDE a target (not as static properties) because the
+    SDK turns $(Version) into AssemblyVersion/InformationalVersion during static
+    property evaluation, before any <Exec> can run git. Running BeforeTargets the
+    SDK's version-consuming targets is what makes the git-derived number stick.
+  -->
+  <Target Name="ComputeVersion"
+          BeforeTargets="GetAssemblyVersion;GenerateAssemblyInfo;CoreCompile;BeforeBuild"
+          Condition="'$(VersionPrefix)' != ''">
+
+    <!-- Build number from git commit count (skip if CI already supplied one). -->
+    <Exec Command="git rev-list --count HEAD"
+          ConsoleToMSBuild="true"
+          StandardOutputImportance="low"
+          IgnoreExitCode="true"
+          WorkingDirectory="$(MSBuildProjectDirectory)"
+          Condition="'$(BuildNumber)' == ''">
+      <Output TaskParameter="ConsoleOutput" PropertyName="BuildNumber" />
+    </Exec>
+
+    <!-- Short git hash for dev build metadata. -->
+    <Exec Command="git rev-parse --short HEAD"
+          ConsoleToMSBuild="true"
+          StandardOutputImportance="low"
+          IgnoreExitCode="true"
+          WorkingDirectory="$(MSBuildProjectDirectory)"
+          Condition="'$(GitHash)' == '' and '$(IsDevBuild)' == 'true'">
+      <Output TaskParameter="ConsoleOutput" PropertyName="GitHash" />
+    </Exec>
+
+    <PropertyGroup>
+      <BuildNumber Condition="'$(BuildNumber)' != ''">$(BuildNumber.Trim())</BuildNumber>
+      <BuildNumber Condition="'$(BuildNumber)' == '' or '$(BuildNumber)' == '0'">1</BuildNumber>
+      <GitHash Condition="'$(GitHash)' != ''">$(GitHash.Trim())</GitHash>
+
+      <!-- UTC compile timestamp (yyyyMMddTHHmm), shown in the dev display string
+           only. Not part of AssemblyVersion/FileVersion. -->
+      <BuildTimestamp Condition="'$(IsDevBuild)' == 'true'">$([System.DateTime]::UtcNow.ToString('yyyyMMddTHHmm'))</BuildTimestamp>
+
+      <!-- Numeric 4-part version used for AssemblyVersion / FileVersion. -->
+      <_NumericVersion>$(VersionPrefix).$(BuildNumber)</_NumericVersion>
+      <AssemblyVersion>$(_NumericVersion)</AssemblyVersion>
+      <FileVersion>$(_NumericVersion)</FileVersion>
+
+      <!-- We compose the informational version by hand, so stop the SDK from
+           also appending +SourceRevisionId. -->
+      <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+
+      <!-- Dev builds: -dev suffix + git hash metadata. Release: bare numeric. -->
+      <Version Condition="'$(IsDevBuild)' == 'true'">$(_NumericVersion)-dev</Version>
+      <Version Condition="'$(IsDevBuild)' != 'true'">$(_NumericVersion)</Version>
+      <InformationalVersion Condition="'$(IsDevBuild)' == 'true' and '$(GitHash)' != ''">$(_NumericVersion)-dev.$(BuildTimestamp)+$(GitHash)</InformationalVersion>
+      <InformationalVersion Condition="'$(IsDevBuild)' == 'true' and '$(GitHash)' == ''">$(_NumericVersion)-dev.$(BuildTimestamp)</InformationalVersion>
+      <InformationalVersion Condition="'$(IsDevBuild)' != 'true'">$(_NumericVersion)</InformationalVersion>
+    </PropertyGroup>
+
+    <Message Text="[version] $(MSBuildProjectName) -> $(InformationalVersion)" Importance="high" />
+  </Target>
+</Project>

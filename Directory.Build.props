@@ -1,0 +1,14 @@
+<Project>
+  <!-- IsDevBuild: true for local developer builds, false under CI.
+       Azure DevOps sets TF_BUILD=true; GitHub Actions and most CIs set CI=true.
+       Override explicitly with: dotnet build /p:IsDevBuild=false -->
+  <PropertyGroup>
+    <IsDevBuild Condition="'$(IsDevBuild)' == '' and '$(TF_BUILD)' != 'true' and '$(CI)' != 'true'">true</IsDevBuild>
+    <IsDevBuild Condition="'$(IsDevBuild)' == ''">false</IsDevBuild>
+  </PropertyGroup>
+
+  <!-- DEVBUILD compile constant for #if DEVBUILD guards in version-display code. -->
+  <PropertyGroup Condition="'$(IsDevBuild)' == 'true'">
+    <DefineConstants>$(DefineConstants);DEVBUILD</DefineConstants>
+  </PropertyGroup>
+</Project>

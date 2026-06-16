@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="src/WorkbenchBridge.Cli/WorkbenchBridge.Cli.csproj" />
+  <Project Path="src/WorkbenchBridge.Ipc/WorkbenchBridge.Ipc.csproj" />
+  <Project Path="src/WorkbenchBridge.Rfc2217/WorkbenchBridge.Rfc2217.csproj" />
+  <Project Path="src/WorkbenchBridge.Service/WorkbenchBridge.Service.csproj" />
+  <Project Path="src/WorkbenchBridge.Tests/WorkbenchBridge.Tests.csproj" />
+</Solution>

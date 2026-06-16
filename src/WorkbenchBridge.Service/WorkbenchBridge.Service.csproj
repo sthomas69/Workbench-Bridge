@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>WorkbenchBridge.Service</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <!-- Readable, hyphenated output name (cosmetic): Workbench-Bridge.Service.exe.
+         RootNamespace stays WorkbenchBridge.Service, so no code/namespace change. -->
+    <AssemblyName>Workbench-Bridge.Service</AssemblyName>
+    <!-- No custom manifest: a manifest-less exe already defaults to asInvoker
+         (run as caller, no forced UAC), exactly what we want. The exe
+         self-elevates in code only when needed (console run / install), so
+         help/version never prompt. (A custom app.manifest broke the single-file
+         side-by-side loader and was redundant.) -->
+    <!-- Semantic version; build number is appended at build time by
+         Directory.Build.targets. See VERSIONING.md. -->
+    <VersionPrefix>0.5.0</VersionPrefix>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WorkbenchBridge.Rfc2217\WorkbenchBridge.Rfc2217.csproj" />
+    <ProjectReference Include="..\WorkbenchBridge.Ipc\WorkbenchBridge.Ipc.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Ship the end-user README next to the exe(s). -->
+    <None Update="README.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <!-- Public defaults ship with the build. -->
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="appsettings.Local.json.example">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <!-- Local overrides (gitignored): copied to bin only if the local file
+         actually exists in the project folder, so contributors who don't have
+         one can still build. -->
+    <None Include="appsettings.Local.json"
+          Condition="Exists('$(MSBuildProjectDirectory)\appsettings.Local.json')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.*" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="10.*" />
+    <PackageReference Include="Serilog.Extensions.Hosting" Version="8.*" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.*" />
+    <PackageReference Include="Serilog.Sinks.File" Version="6.*" />
+    <PackageReference Include="System.IO.Ports" Version="10.*" />
+  </ItemGroup>
+
+</Project>
